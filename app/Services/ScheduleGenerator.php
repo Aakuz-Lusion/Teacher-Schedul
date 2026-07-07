@@ -18,90 +18,76 @@ class ScheduleGenerator
     ];
 
     public function generate()
-    {
-        // Clear existing schedules
-        Schedule::truncate();
+{
+    Schedule::truncate();
 
-        // Get all available teachers
-        $teachers = Teacher::where('is_available', 1)->get();
+    $teachers = Teacher::where('is_available', 1)->get();
 
-        if ($teachers->isEmpty()) {
-            return [
-                'total' => 0,
-                'errors' => ['No available teachers found']
-            ];
-        }
-
-        $totalSchedules = 0;
-        $errors = [];
-
-        foreach ($this->grades as $grade) {
-            $gradeTeachers = $teachers->where('grade', $grade);
-            
-            if ($gradeTeachers->isEmpty()) {
-                $errors[] = "No teachers found for {$grade}";
-                // Create empty schedules for this grade
-                foreach ($this->days as $day) {
-                    foreach ($this->periods as $period) {
-                        Schedule::create([
-                            'day' => $day,
-                            'grade' => $grade,
-                            'period_id' => $period,
-                            'subject' => 'unassigned',
-                            'teacher_id' => null,
-                            'teacher_name' => '—',
-                        ]);
-                    }
-                }
-                continue;
-            }
-
-            foreach ($this->days as $day) {
-                $availableTeachers = $gradeTeachers->filter(function($teacher) use ($day) {
-                    $days = $this->decodeJson($teacher->days);
-                    return in_array($day, $days);
-                });
-
-                $assignedTeachers = [];
-
-                foreach ($this->periods as $period) {
-                    $teacher = $this->findTeacherForPeriod(
-                        $availableTeachers,
-                        $period,
-                        $assignedTeachers
-                    );
-
-                    if ($teacher) {
-                        Schedule::create([
-                            'day' => $day,
-                            'grade' => $grade,
-                            'period_id' => $period,
-                            'subject' => $teacher->subject,
-                            'teacher_id' => $teacher->id,
-                            'teacher_name' => $teacher->name,
-                        ]);
-                        
-                        $assignedTeachers[$teacher->id] = ($assignedTeachers[$teacher->id] ?? 0) + 1;
-                        $totalSchedules++;
-                    } else {
-                        Schedule::create([
-                            'day' => $day,
-                            'grade' => $grade,
-                            'period_id' => $period,
-                            'subject' => 'unassigned',
-                            'teacher_id' => null,
-                            'teacher_name' => '—',
-                        ]);
-                    }
-                }
-            }
-        }
-
-        return [
-            'total' => $totalSchedules,
-            'errors' => $errors
-        ];
+    if ($teachers->isEmpty()) {
+        return ['total' => 0, 'errors' => ['No available teachers found']];
     }
+
+    $totalSchedules = 0;
+    $errors = [];
+
+    foreach ($this->grades as $grade) {
+        // Find teachers who can teach this grade
+        $gradeTeachers = $teachers->filter(function($teacher) use ($grade) {
+            $grades = $this->decodeJson($teacher->grades);
+            return in_array($grade, $grades);
+        });
+
+        if ($gradeTeachers->isEmpty()) {
+            $errors[] = "No teachers found for {$grade}";
+            continue;
+        }
+
+        foreach ($this->days as $day) {
+            $availableTeachers = $gradeTeachers->filter(function($teacher) use ($day) {
+                $days = $this->decodeJson($teacher->days);
+                return in_array($day, $days);
+            });
+
+            $assignedTeachers = [];
+
+            foreach ($this->periods as $period) {
+                $teacher = $this->findTeacherForPeriod(
+                    $availableTeachers,
+                    $period,
+                    $assignedTeachers
+                );
+
+                if ($teacher) {
+                    Schedule::create([
+                        'day' => $day,
+                        'grade' => $grade,
+                        'period_id' => $period,
+                        'subject' => $teacher->subject,
+                        'teacher_id' => $teacher->id,
+                        'teacher_name' => $teacher->name,
+                    ]);
+                    
+                    $assignedTeachers[$teacher->id] = ($assignedTeachers[$teacher->id] ?? 0) + 1;
+                    $totalSchedules++;
+                } else {
+                    Schedule::create([
+                        'day' => $day,
+                        'grade' => $grade,
+                        'period_id' => $period,
+                        'subject' => 'unassigned',
+                        'teacher_id' => null,
+                        'teacher_name' => '—',
+                    ]);
+                }
+            }
+        }
+    }
+
+    return [
+        'total' => $totalSchedules,
+        'errors' => $errors
+    ];
+}
 
     protected function findTeacherForPeriod($teachers, $period, $assigned)
     {

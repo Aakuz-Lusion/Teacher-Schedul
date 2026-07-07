@@ -35,6 +35,7 @@ class Teacher extends Authenticatable
     protected $casts = [
     'days' => 'array',
     'periods' => 'array',
+    'grades' => 'array',  
     'is_active' => 'boolean',
     'is_available' => 'boolean',
     'unavailable_date' => 'date',
