@@ -64,4 +64,11 @@ class TeacherLoginController extends Controller
 
         return back()->with('success', 'You are now marked as available.');
     }
+    protected function redirectTo()
+{
+    if (Auth::guard('teacher')->check()) {
+        return route('teacher.dashboard');
+    }
+    return route('teacher.login');
+}
 }
