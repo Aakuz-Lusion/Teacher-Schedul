@@ -10,9 +10,6 @@ use Illuminate\Support\Facades\Hash;
 
 class AdminController extends Controller
 {
-    /**
-     * Admin Dashboard - Show all teachers and statistics
-     */
     public function dashboard()
     {
         $teachers = Teacher::all();
@@ -28,26 +25,17 @@ class AdminController extends Controller
         ));
     }
 
-    /**
-     * Show the timetable/schedule view
-     */
     public function schedule()
     {
         return view('admin.schedule');
     }
 
-    /**
-     * Show change password form for a specific teacher
-     */
     public function showChangePassword($id)
     {
         $teacher = Teacher::findOrFail($id);
         return view('admin.change-password', compact('teacher'));
     }
 
-    /**
-     * Update teacher password
-     */
     public function updatePassword(Request $request, $id)
     {
         $request->validate([
@@ -62,9 +50,6 @@ class AdminController extends Controller
             ->with('success', 'Password changed successfully for ' . $teacher->name);
     }
 
-    /**
-     * Generate the complete timetable schedule
-     */
     public function generateSchedule()
     {
         try {
@@ -89,20 +74,15 @@ class AdminController extends Controller
         }
     }
 
-    /**
-     * Show replacement form for an unavailable teacher
-     */
     public function showReplacement($id)
     {
         $unavailableTeacher = Teacher::findOrFail($id);
         
-        // Find available teachers with same subject
         $availableTeachers = Teacher::where('is_available', true)
             ->where('id', '!=', $id)
             ->where('subject', $unavailableTeacher->subject)
             ->get();
 
-        // Also get teachers with different subject but available (as fallback)
         if ($availableTeachers->isEmpty()) {
             $availableTeachers = Teacher::where('is_available', true)
                 ->where('id', '!=', $id)
@@ -113,9 +93,6 @@ class AdminController extends Controller
         return view('admin.replacement', compact('unavailableTeacher', 'availableTeachers'));
     }
 
-    /**
-     * Assign a replacement teacher
-     */
     public function assignReplacement(Request $request, $id)
     {
         $request->validate([
@@ -126,7 +103,6 @@ class AdminController extends Controller
         $originalTeacher = Teacher::findOrFail($id);
         $replacementTeacher = Teacher::findOrFail($request->replacement_teacher_id);
 
-        // Update schedules for today
         $updatedCount = Schedule::where('teacher_id', $id)
             ->where('day', now()->format('l'))
             ->update([
@@ -135,7 +111,6 @@ class AdminController extends Controller
                 'subject' => $replacementTeacher->subject,
             ]);
 
-        // Mark original as unavailable
         $originalTeacher->is_available = false;
         $originalTeacher->unavailable_date = now()->toDateString();
         $originalTeacher->unavailable_reason = $request->reason ?? 'Replacement assigned';
@@ -146,9 +121,6 @@ class AdminController extends Controller
             ->with('success', $message);
     }
 
-    /**
-     * Generate schedule for a specific grade only
-     */
     public function generateGradeSchedule($grade)
     {
         try {
@@ -168,9 +140,6 @@ class AdminController extends Controller
         }
     }
 
-    /**
-     * Clear all schedules
-     */
     public function clearSchedules()
     {
         $count = Schedule::count();
@@ -180,9 +149,6 @@ class AdminController extends Controller
             ->with('info', "🗑️ All schedules cleared. ({$count} entries removed)");
     }
 
-    /**
-     * Get schedule statistics
-     */
     public function scheduleStats()
     {
         $total = Schedule::count();

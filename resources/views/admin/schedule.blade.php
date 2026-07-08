@@ -1,363 +1,441 @@
-<!DOCTYPE html>
-<html lang="en">
+@extends('layouts.admin')
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Schedule</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
-        rel="stylesheet">
-    <style>
-    * {
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
+@section('title', 'Timetable')
+@section('header', '📅 School Timetable')
+@section('subtitle', 'Complete schedule for all grades')
+
+@section('actions')
+<a href="{{ route('admin.generate-schedule') }}" class="btn btn-primary">🔄 Generate Schedule</a>
+@endsection
+
+@section('styles')
+<style>
+
+.schedule-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
+    gap: 24px;
+    align-items: start;
+}
+
+
+
+.grade-card {
+    background: rgba(255, 255, 255, .03);
+    border: 1px solid rgba(255, 255, 255, .08);
+    border-radius: 18px;
+    padding: 22px;
+    overflow: visible;      /* ← CHANGED: was 'hidden' */
+    transition: .3s ease;
+    position: relative;     /* ← ADDED: for tooltip positioning */
+}
+
+.grade-card:hover {
+    border-color: rgba(99, 102, 241, .3);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, .25);
+}
+
+.grade-card h3 {
+    margin: 0 0 18px;
+    padding-bottom: 12px;
+    color: #fff;
+    font-size: 24px;
+    font-weight: 700;
+    border-bottom: 1px solid rgba(255, 255, 255, .08);
+}
+
+
+
+.schedule-row {
+    display: grid;
+    grid-template-columns: 50px repeat(6, minmax(70px, 1fr));
+    gap: 8px;
+    align-items: stretch;
+    padding: 6px 0;
+}
+
+.schedule-row+.schedule-row {
+    border-top: 1px solid rgba(255, 255, 255, .05);
+}
+
+.schedule-row-header {
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: rgba(255, 255, 255, .5);
+    margin-bottom: 8px;
+}
+
+.schedule-row-header span {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+/* ===========================
+   PERIOD LABEL
+=========================== */
+
+.period-label {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    color: rgba(255, 255, 255, .55);
+    font-weight: 700;
+    font-size: 12px;
+}
+
+/* ===========================
+   CELLS
+=========================== */
+
+.schedule-cell {
+    height: 68px;
+    min-height: 68px;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+
+    border-radius: 12px;
+    text-align: center;
+
+    padding: 6px;
+
+    position: relative;
+
+    transition: .25s ease;
+
+    /* REMOVED: overflow: hidden; - tooltips need to show outside */
+}
+
+.schedule-cell:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 18px rgba(0, 0, 0, .25);
+    z-index: 10;            /* ← ADDED: bring cell above others on hover */
+}
+
+/* ===========================
+   ASSIGNED
+=========================== */
+
+.cell-assigned {
+    background: rgba(99, 102, 241, .14);
+    border: 1px solid rgba(99, 102, 241, .25);
+}
+
+.cell-assigned:hover {
+    background: rgba(99, 102, 241, .22);
+    border-color: #818cf8;
+}
+
+/* ===========================
+   EMPTY
+=========================== */
+
+.cell-unassigned {
+    background: rgba(255, 255, 255, .03);
+    border: 1px dashed rgba(255, 255, 255, .08);
+    color: rgba(255, 255, 255, .2);
+}
+
+.cell-unassigned:hover {
+    background: rgba(255, 255, 255, .05);
+}
+
+/* ===========================
+   SUBJECT
+=========================== */
+
+.subject-badge {
+    background: #6366f1;
+    color: white;
+
+    padding: 3px 10px;
+
+    border-radius: 50px;
+
+    font-size: 11px;
+    font-weight: 700;
+
+    margin-bottom: 4px;
+}
+
+/* ===========================
+   TEACHER
+=========================== */
+
+.teacher-name {
+    font-size: 11px;
+    color: white;
+
+    line-height: 1.2;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    display: -webkit-box;
+
+    -webkit-line-clamp: 2;
+
+    -webkit-box-orient: vertical;
+}
+
+/* ===========================
+   TOOLTIP - FIXED
+=========================== */
+
+.tooltip {
+    position: absolute;
+    left: 50%;
+    bottom: calc(100% + 12px);
+
+    transform: translateX(-50%);
+
+    display: none;
+
+    background: #1f2937;
+
+    border-radius: 12px;
+
+    padding: 14px 18px;
+
+    min-width: 180px;
+
+    border: 1px solid rgba(255, 255, 255, .10);
+
+    box-shadow: 0 16px 48px rgba(0, 0, 0, .5);
+
+    z-index: 9999;          /* ← CHANGED: higher z-index */
+
+    text-align: left;
+
+    pointer-events: none;   /* ← ADDED: prevents tooltip from interfering with hover */
+
+    animation: tooltipFade 0.2s ease;
+}
+
+.schedule-cell:hover .tooltip {
+    display: block;
+}
+
+/* Tooltip arrow */
+.tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 8px solid transparent;
+    border-top-color: #1f2937;
+}
+
+.tip-subject {
+    color: #818cf8;
+    font-size: 16px;
+    font-weight: 700;
+}
+
+.tip-teacher,
+.tip-grade {
+    color: white;
+    margin-top: 4px;
+    font-size: 13px;
+}
+
+.tip-time {
+    color: rgba(255, 255, 255, .5);
+    margin-top: 8px;
+    border-top: 1px solid rgba(255, 255, 255, .08);
+    padding-top: 8px;
+    font-size: 12px;
+}
+
+/* Tooltip animation */
+@keyframes tooltipFade {
+    from {
+        opacity: 0;
+        transform: translateX(-50%) translateY(8px);
     }
-
-    body {
-        font-family: 'Inter', sans-serif;
-        background: #0a0e1a;
-        color: #f1f5f9;
-        padding: 12px;
-        background-image:
-            radial-gradient(circle at 10% 20%, rgba(99, 102, 241, .12), transparent 50%),
-            radial-gradient(circle at 90% 80%, rgba(139, 92, 246, .10), transparent 50%);
+    to {
+        opacity: 1;
+        transform: translateX(-50%) translateY(0);
     }
+}
 
-    .container {
-        max-width: 1900px;
-        margin: auto;
-    }
+/* ===========================
+   STATS
+=========================== */
 
-    .glass {
-        background: rgba(255, 255, 255, .03);
-        backdrop-filter: blur(24px);
-        border: 1px solid rgba(255, 255, 255, .06);
-        border-radius: 18px;
-        padding: 18px;
-        box-shadow: 0 8px 30px rgba(0, 0, 0, .35);
-    }
+.stats-bar {
+    margin-top: 30px;
 
-    /* ================= HEADER ================= */
+    display: flex;
 
-    .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        flex-wrap: wrap;
-        gap: 10px;
-        margin-bottom: 16px;
-    }
+    flex-wrap: wrap;
 
-    h1 {
-        font-size: 24px;
-        font-weight: 700;
-        background: linear-gradient(135deg, #fff, #9ca3af);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
+    gap: 18px;
 
-    .subtitle {
-        font-size: 12px;
-        color: #94a3b8;
-    }
+    padding-top: 20px;
 
-    /* ================= BUTTONS ================= */
+    border-top: 1px solid rgba(255, 255, 255, .08);
 
-    .btn {
-        padding: 8px 18px;
-        border: none;
-        border-radius: 10px;
-        font-size: 12px;
-        font-weight: 600;
-        text-decoration: none;
-        transition: .3s;
-    }
+    color: rgba(255, 255, 255, .75);
+}
 
-    .btn-primary {
-        background: linear-gradient(135deg, #6366f1, #8b5cf6);
-        color: white;
-    }
+.stats-bar strong {
+    color: white;
+}
 
-    .btn-primary:hover {
-        transform: translateY(-2px);
-    }
+.assigned {
+    color: #22c55e;
+}
 
-    .btn-secondary {
-        background: rgba(255, 255, 255, .05);
-        color: #d1d5db;
-        border: 1px solid rgba(255, 255, 255, .08);
-    }
+.unassigned {
+    color: #ef4444;
+}
 
-    /* ================= NAV ================= */
+/* ===========================
+   RESPONSIVE
+=========================== */
 
-    .nav-links {
-        display: flex;
-        gap: 8px;
-        margin-bottom: 15px;
-        flex-wrap: wrap;
-    }
-
-    .nav-links a {
-        text-decoration: none;
-        color: #9ca3af;
-        padding: 5px 12px;
-        font-size: 11px;
-        border-radius: 20px;
-        transition: .25s;
-    }
-
-    .nav-links a:hover {
-        background: rgba(255, 255, 255, .06);
-        color: white;
-    }
-
-    .nav-links a.active {
-        background: #4f46e5;
-        color: white;
-    }
-
-    /* ================= ALERTS ================= */
-
-    .flash {
-        padding: 10px 15px;
-        margin-bottom: 15px;
-        border-radius: 10px;
-        font-size: 12px;
-    }
-
-    .flash-success {
-        background: rgba(34, 197, 94, .12);
-        color: #6ee7b7;
-    }
-
-    .flash-error {
-        background: rgba(239, 68, 68, .12);
-        color: #fca5a5;
-    }
-
-    /* ================= GRID ================= */
-
+@media (max-width:1200px) {
     .schedule-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 12px;
+        grid-template-columns: 1fr;
     }
+}
 
-    /* ================= CARD ================= */
-
+@media (max-width:768px) {
     .grade-card {
-        background: rgba(255, 255, 255, .025);
-        border: 1px solid rgba(255, 255, 255, .06);
-        border-radius: 12px;
-        padding: 8px;
-        transition: .25s;
+        overflow-x: auto;    /* ← CHANGED: scroll on small screens only */
     }
-
-    .grade-card:hover {
-        border-color: #6366f1;
-        transform: translateY(-2px);
-    }
-
-    .grade-card h3 {
-        text-align: center;
-        font-size: 13px;
-        margin-bottom: 8px;
-        color: #fff;
-    }
-
-    /* ================= TABLE ================= */
 
     .schedule-row {
-        display: grid;
-        grid-template-columns: 28px repeat(6, 1fr);
-        gap: 2px;
-        align-items: center;
-        padding: 2px 0;
+        min-width: 620px;
     }
 
-    .schedule-row-header {
-        font-size: 8px;
-        font-weight: 700;
-        color: #94a3b8;
-        text-transform: uppercase;
-        border-bottom: 1px solid rgba(255, 255, 255, .06);
-        padding-bottom: 4px;
-        margin-bottom: 3px;
+    .tooltip {
+        min-width: 140px;
+        padding: 10px 14px;
+        font-size: 12px;
     }
-
-    .period-label {
-        font-size: 8px;
-        font-weight: 700;
-        color: #94a3b8;
+    .tip-subject {
+        font-size: 14px;
     }
+    .tip-teacher,
+    .tip-grade {
+        font-size: 12px;
+    }
+}
 
-    /* ================= CELLS ================= */
-
+@media (max-width:480px) {
     .schedule-cell {
-        min-height: 32px;
-        padding: 2px;
-        border-radius: 5px;
-        text-align: center;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: center;
+        height: 52px;
+        min-height: 52px;
+        font-size: 9px;
     }
-
-    .cell-assigned {
-        background: rgba(79, 70, 229, .18);
-        border: 1px solid rgba(99, 102, 241, .30);
-    }
-
-    .cell-unassigned {
-        background: rgba(255, 255, 255, .03);
-        border: 1px dashed rgba(255, 255, 255, .06);
-    }
-
-    /* ================= SUBJECT ================= */
-
     .subject-badge {
-        display: inline-block;
-        padding: 1px 4px;
-        border-radius: 8px;
-        font-size: 7px;
-        font-weight: 700;
-        background: #4f46e5;
-        color: white;
-        margin-bottom: 2px;
+        font-size: 8px;
+        padding: 2px 6px;
     }
-
-    /* ================= TEACHER ================= */
-
     .teacher-name {
-        font-size: 7px !important;
-        color: #f8fafc;
-        line-height: 1;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        width: 100%;
+        font-size: 8px;
     }
-
-    /* ================= RESPONSIVE ================= */
-
-    @media(max-width:1500px) {
-
-        .schedule-grid {
-            grid-template-columns: repeat(3, 1fr);
-        }
-
+    .period-label {
+        font-size: 9px;
     }
-
-    @media(max-width:1100px) {
-
-        .schedule-grid {
-            grid-template-columns: repeat(2, 1fr);
-        }
-
+    .tooltip {
+        min-width: 120px;
+        padding: 8px 12px;
+        font-size: 11px;
+        bottom: calc(100% + 8px);
     }
-
-    @media(max-width:700px) {
-
-        .schedule-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .glass {
-            padding: 10px;
-        }
-
-        .schedule-row {
-            grid-template-columns: 24px repeat(6, 1fr);
-        }
-
+    .tip-subject {
+        font-size: 12px;
     }
-    </style>
-</head>
+}
+</style>
+@endsection
 
-<body>
-    <div class="container">
-        <div class="glass">
-            <div class="nav-links">
-                <a href="{{ route('teachers.index') }}">👨‍🏫 Teachers</a>
-                <a href="{{ route('admin.dashboard') }}">👑 Admin Dashboard</a>
-                <a href="{{ route('admin.schedule') }}" class="active">📅 Schedule</a>
-            </div>
+@section('content')
+@php
+$days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
 
-            <div class="header">
-                <div>
-                    <h1>📅 Timetable</h1>
-                    <p class="subtitle">Complete school timetable</p>
-                </div>
-                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
-                    <a href="{{ route('admin.generate-schedule') }}" class="btn btn-primary">🔄 Generate Schedule</a>
-                    <a href="{{ route('admin.dashboard') }}" class="btn btn-secondary">← Back</a>
-                </div>
-            </div>
+// PERIOD MAPPING: 7 teaching periods (period IDs 1,2,4,5,7,8,10)
+// Display as Period 1 to Period 7
+$periodMap = [
+['id' => 1, 'label' => 'P1', 'time' => '10:00–10:45'],
+['id' => 2, 'label' => 'P2', 'time' => '10:45–11:30'],
+['id' => 4, 'label' => 'P3', 'time' => '11:45–12:30'],
+['id' => 5, 'label' => 'P4', 'time' => '12:30–1:15'],
+['id' => 7, 'label' => 'P5', 'time' => '2:00–2:45'],
+['id' => 8, 'label' => 'P6', 'time' => '2:45–3:30'],
+['id' => 10, 'label' => 'P7', 'time' => '3:45–4:30'],
+];
 
-            @if(session('success'))
-            <div class="flash flash-success">{{ session('success') }}</div>
-            @endif
-            @if(session('error'))
-            <div class="flash flash-error">{{ session('error') }}</div>
-            @endif
+$grades = ['Grade 1-A', 'Grade 1-B', 'Grade 2-A', 'Grade 2-B', 'Grade 3-A', 'Grade 3-B', 'Grade 4-A', 'Grade 4-B',
+'Grade 5-A', 'Grade 5-B'];
+$allSchedules = \App\Models\Schedule::all()->groupBy('grade');
+@endphp
 
+<div class="schedule-grid">
+    @foreach($grades as $grade)
+    <div class="grade-card">
+        <h3>{{ $grade }}</h3>
+
+        <!-- Header Row -->
+        <div class="schedule-row schedule-row-header">
+            <span>P</span>
+            @foreach($days as $day)
+            <span>{{ substr($day, 0, 3) }}</span>
+            @endforeach
+        </div>
+
+        <!-- Period Rows -->
+        @foreach($periodMap as $periodData)
+        <div class="schedule-row">
+            <span class="period-label">{{ $periodData['label'] }}</span>
+
+            @foreach($days as $day)
             @php
-            $days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
-            $periods = [1, 2, 4, 5, 7, 8, 10];
-            $grades = ['Grade 1-A', 'Grade 1-B', 'Grade 2-A', 'Grade 2-B', 'Grade 3-A', 'Grade 3-B', 'Grade 4-A', 'Grade
-            4-B', 'Grade 5-A', 'Grade 5-B'];
-            $allSchedules = \App\Models\Schedule::all()->groupBy('grade');
+            $schedule = $allSchedules[$grade] ?? collect();
+            $entry = $schedule->where('day', $day)->where('period_id', $periodData['id'])->first();
+            $isAssigned = $entry && $entry->teacher_name != '—';
             @endphp
 
-            <div class="schedule-grid">
-                @foreach($grades as $grade)
-                <div class="grade-card">
-                    <h3>{{ $grade }}</h3>
-                    <div class="schedule-row schedule-row-header">
-                        <span>P</span>
-                        @foreach($days as $day)
-                        <span>{{ substr($day, 0, 3) }}</span>
-                        @endforeach
-                    </div>
+            <div class="schedule-cell {{ $isAssigned ? 'cell-assigned' : 'cell-unassigned' }}"
+                title="{{ $isAssigned ? $entry->teacher_name . ' - ' . ucfirst($entry->subject) : 'Unassigned' }}">
+                @if($isAssigned)
+                <div class="subject-badge">{{ ucfirst($entry->subject) }}</div>
+                <div class="teacher-name">{{ $entry->teacher_name }}</div>
 
-                    @foreach($periods as $period)
-                    <div class="schedule-row">
-                        <span class="period-label">P{{ $period }}</span>
-                        @foreach($days as $day)
-                        @php
-                        $schedule = $allSchedules[$grade] ?? collect();
-                        $entry = $schedule->where('day', $day)->where('period_id', $period)->first();
-                        @endphp
-                        <div
-                            class="schedule-cell {{ $entry && $entry->teacher_name != '—' ? 'cell-assigned' : 'cell-unassigned' }}">
-                            @if($entry && $entry->teacher_name != '—')
-                            <div class="subject-badge">{{ ucfirst($entry->subject) }}</div>
-                            <div class="teacher-name" style="font-size: 9px; margin-top: 2px;">
-                                {{ $entry->teacher_name }}</div>
-                            @else
-                            <span style="font-size: 10px;">—</span>
-                            @endif
-                        </div>
-                        @endforeach
-                    </div>
-                    @endforeach
+                <!-- Tooltip/Popup -->
+                <div class="tooltip">
+                    <div class="tip-subject">{{ ucfirst($entry->subject) }}</div>
+                    <div class="tip-teacher"> {{ $entry->teacher_name }}</div>
+                    <div class="tip-grade">{{ $entry->grade }}</div>
+                    <div class="tip-time">{{ $day }} • {{ $periodData['time'] }}</div>
                 </div>
-                @endforeach
+                @else
+                <span style="font-size: 10px; opacity: 0.3;">—</span>
+                @endif
             </div>
-
-            <div
-                style="margin-top: 20px; padding-top: 20px; border-top: 1px solid rgba(255,255,255,0.06); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; color: rgba(255,255,255,0.3); font-size: 12px;">
-                <span>Total Schedules: <strong
-                        style="color: #f1f5f9;">{{ \App\Models\Schedule::count() }}</strong></span>
-                <span>Assigned: <strong
-                        style="color: #6ee7b7;">{{ \App\Models\Schedule::where('teacher_name', '!=', '—')->count() }}</strong></span>
-                <span>Unassigned: <strong
-                        style="color: #fca5a5;">{{ \App\Models\Schedule::where('teacher_name', '—')->count() }}</strong></span>
-            </div>
+            @endforeach
         </div>
+        @endforeach
     </div>
-</body>
+    @endforeach
+</div>
 
-</html>
+<div class="stats-bar">
+    <span>Total Schedules: <strong>{{ \App\Models\Schedule::count() }}</strong></span>
+    <span class="assigned">✅ Assigned:
+        <strong>{{ \App\Models\Schedule::where('teacher_name', '!=', '—')->count() }}</strong></span>
+    <span class="unassigned">❌ Unassigned:
+        <strong>{{ \App\Models\Schedule::where('teacher_name', '—')->count() }}</strong></span>
+</div>
+@endsection
