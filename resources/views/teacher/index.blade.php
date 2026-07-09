@@ -1,7 +1,7 @@
 @extends('layouts.admin')
 
 @section('title', 'Teachers List')
-@section('header', '👨‍🏫 Teachers List')
+@section('header', 'Teachers List')
 @section('subtitle', 'Manage all teachers and their availability')
 
 @section('actions')
@@ -231,12 +231,11 @@
 @section('content')
 <!-- Stats -->
 <div class="stats-bar">
-    <span>📊 Total: <strong>{{ $teachers->count() }}</strong></span>
-    <span>✅ Available: <strong class="available-count">{{ $teachers->where('is_available', true)->count() }}</strong></span>
-    <span>❌ Unavailable: <strong class="unavailable-count">{{ $teachers->where('is_available', false)->count() }}</strong></span>
+    <span> Total: <strong>{{ $teachers->count() }}</strong></span>
+    <span> Available: <strong class="available-count">{{ $teachers->where('is_available', true)->count() }}</strong></span>
+    <span> Unavailable: <strong class="unavailable-count">{{ $teachers->where('is_available', false)->count() }}</strong></span>
 </div>
 
-<!-- Table -->
 <div class="card-content">
     <div class="table-container">
         <table>
@@ -275,9 +274,9 @@
                     </td>
                     <td>
                         @if($teacher->is_available)
-                            <span class="badge-status badge-available">✅ Available</span>
+                            <span class="badge-status badge-available"> Available</span>
                         @else
-                            <span class="badge-status badge-unavailable">❌ Unavailable</span>
+                            <span class="badge-status badge-unavailable"> Unavailable</span>
                             @if($teacher->unavailable_reason)
                                 <br><small style="color: rgba(255,255,255,0.3); font-size: 10px;">{{ $teacher->unavailable_reason }}</small>
                             @endif
@@ -305,11 +304,11 @@
                         <div class="actions">
                             <a href="{{ route('admin.change-password', $teacher->id) }}" 
                                class="btn-action btn-primary-action" 
-                               title="Change Password">🔑</a>
+                               title="Change Password"></a>
                             @if(!$teacher->is_available)
                                 <a href="{{ route('admin.replacement', $teacher->id) }}" 
                                    class="btn-action btn-success-action" 
-                                   title="Assign Replacement">🔄</a>
+                                   title="Assign Replacement"></a>
                             @endif
                         </div>
                     </td>
@@ -318,7 +317,6 @@
                 <tr>
                     <td colspan="9">
                         <div class="empty-state">
-                            <div class="icon">📋</div>
                             <p>No teachers found.</p>
                             <p><a href="{{ route('teachers.create') }}">Add your first teacher</a></p>
                         </div>

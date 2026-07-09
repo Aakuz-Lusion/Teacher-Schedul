@@ -31,7 +31,6 @@ class ScheduleGenerator
     $errors = [];
 
     foreach ($this->grades as $grade) {
-        // Find teachers who can teach this grade
         $gradeTeachers = $teachers->filter(function($teacher) use ($grade) {
             $grades = $this->decodeJson($teacher->grades);
             return in_array($grade, $grades);

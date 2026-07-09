@@ -117,6 +117,6 @@ class TeacherSeeder extends Seeder
             Teacher::create($teacher);
         }
 
-        $this->command->info('✅ ' . count($teachers) . ' teachers seeded successfully!');
+        $this->command->info( . count($teachers) . ' teachers seeded successfully!');
     }
 }

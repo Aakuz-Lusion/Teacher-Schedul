@@ -18,7 +18,6 @@
                 radial-gradient(ellipse at 90% 80%, rgba(139, 92, 246, 0.10) 0%, transparent 50%);
         }
         
-        /* ===== SIDEBAR ===== */
         .sidebar {
             width: 260px;
             background: rgba(255, 255, 255, 0.02);
@@ -123,7 +122,6 @@
             color: #fca5a5;
         }
         
-        /* ===== MAIN CONTENT ===== */
         .main-content {
             margin-left: 260px;
             flex: 1;
@@ -151,7 +149,6 @@
             font-size: 13px;
         }
         
-        /* ===== MOBILE TOGGLE ===== */
         .sidebar-toggle {
             display: none;
             position: fixed;
@@ -167,7 +164,6 @@
             font-size: 20px;
         }
         
-        /* ===== RESPONSIVE ===== */
         @media (max-width: 768px) {
             .sidebar {
                 transform: translateX(-100%);
@@ -205,12 +201,10 @@
             }
         }
         
-        /* ===== SCROLLBAR ===== */
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: transparent; }
         ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
         
-        /* ===== CONTENT AREA ===== */
         .content-area {
             animation: fadeIn 0.4s ease;
         }
@@ -223,11 +217,9 @@
 </head>
 <body>
 
-<!-- Mobile Toggle -->
 <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
 <div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
 
-<!-- Sidebar -->
 <nav class="sidebar" id="sidebar">
     <div class="sidebar-brand">
         <div class="logo"></div>

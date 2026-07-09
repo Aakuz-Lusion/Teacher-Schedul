@@ -1,314 +1,169 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>@yield('title', 'Admin Dashboard') - Teacher Scheduler</title>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <title>@yield('title', 'Admin Dashboard')</title>
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
         body {
-            font-family: 'Inter', -apple-system, sans-serif;
-            background: #0a0e1a;
-            color: #f1f5f9;
-            min-height: 100vh;
-            display: flex;
-            background-image: 
-                radial-gradient(ellipse at 10% 20%, rgba(99, 102, 241, 0.12) 0%, transparent 50%),
-                radial-gradient(ellipse at 90% 80%, rgba(139, 92, 246, 0.10) 0%, transparent 50%);
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #f4f4f4;
         }
-        
-        .sidebar {
-            width: 260px;
-            background: rgba(255, 255, 255, 0.02);
-            backdrop-filter: blur(24px);
-            border-right: 1px solid rgba(255, 255, 255, 0.06);
-            padding: 24px 16px;
-            min-height: 100vh;
-            position: fixed;
-            top: 0;
-            left: 0;
-            height: 100vh;
-            overflow-y: auto;
-            z-index: 100;
-            transition: all 0.3s ease;
+        nav {
+            background: #333;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 20px;
         }
-        
-        .sidebar-brand {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 8px 12px 24px 12px;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
-            margin-bottom: 24px;
+        nav ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
         }
-        .sidebar-brand .logo {
-            width: 40px;
-            height: 40px;
-            border-radius: 12px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 20px;
+        nav ul li {
+            display: inline;
+            margin-right: 20px;
         }
-        .sidebar-brand .brand-text {
-            font-size: 18px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #f1f5f9, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .sidebar-brand .brand-sub {
-            font-size: 10px;
-            color: rgba(255,255,255,0.2);
-            -webkit-text-fill-color: rgba(255,255,255,0.2);
-        }
-        
-        .sidebar .nav-label {
-            font-size: 10px;
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            color: rgba(255,255,255,0.15);
-            padding: 16px 12px 8px 12px;
-            font-weight: 600;
-        }
-        
-        .sidebar a {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            padding: 10px 14px;
-            border-radius: 12px;
-            color: rgba(255, 255, 255, 0.5);
+        nav ul li a {
+            color: white;
             text-decoration: none;
-            transition: all 0.3s ease;
-            font-size: 14px;
-            font-weight: 500;
-            margin-bottom: 2px;
         }
-        .sidebar a:hover {
-            background: rgba(255, 255, 255, 0.04);
-            color: #f1f5f9;
+        nav ul li a:hover {
+            text-decoration: underline;
         }
-        .sidebar a.active {
-            background: rgba(99, 102, 241, 0.12);
-            color: #a5b4fc;
-            box-shadow: 0 0 20px rgba(99, 102, 241, 0.05);
+        nav ul li form {
+            display: inline;
         }
-        .sidebar a .icon {
-            font-size: 18px;
-            width: 24px;
-            text-align: center;
-        }
-        .sidebar a .badge {
-            margin-left: auto;
-            padding: 2px 10px;
-            border-radius: 100px;
-            font-size: 10px;
-            font-weight: 600;
-            background: rgba(239, 68, 68, 0.15);
-            color: #fca5a5;
-        }
-        
-        .sidebar .logout-link {
-            margin-top: 20px;
-            border-top: 1px solid rgba(255, 255, 255, 0.06);
-            padding-top: 16px;
-            color: rgba(239, 68, 68, 0.4);
-        }
-        .sidebar .logout-link:hover {
-            background: rgba(239, 68, 68, 0.05);
-            color: #fca5a5;
-        }
-        
-        .main-content {
-            margin-left: 260px;
-            flex: 1;
-            padding: 24px 32px 40px 32px;
-            min-height: 100vh;
-        }
-        
-        .page-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 16px;
-            margin-bottom: 28px;
-        }
-        .page-header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            background: linear-gradient(135deg, #f1f5f9, #94a3b8);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-        }
-        .page-header .subtitle {
-            color: rgba(255,255,255,0.3);
-            font-size: 13px;
-        }
-        
-        .sidebar-toggle {
-            display: none;
-            position: fixed;
-            top: 16px;
-            left: 16px;
-            z-index: 200;
-            background: rgba(255,255,255,0.05);
-            border: 1px solid rgba(255,255,255,0.06);
-            border-radius: 12px;
-            padding: 8px 12px;
-            color: #f1f5f9;
+        nav ul li button {
+            background: none;
+            border: none;
+            color: white;
+            text-decoration: underline;
             cursor: pointer;
-            font-size: 20px;
+            font-size: 16px;
         }
-        
-        @media (max-width: 768px) {
-            .sidebar {
-                transform: translateX(-100%);
-                width: 280px;
-            }
-            .sidebar.open {
-                transform: translateX(0);
-            }
-            .sidebar-toggle {
-                display: block;
-            }
-            .main-content {
-                margin-left: 0;
-                padding: 20px 16px 32px 16px;
-                margin-top: 20px;
-            }
-            .sidebar-overlay {
-                display: none;
-                position: fixed;
-                top: 0;
-                left: 0;
-                right: 0;
-                bottom: 0;
-                background: rgba(0,0,0,0.6);
-                z-index: 99;
-            }
-            .sidebar-overlay.active {
-                display: block;
-            }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
-        
-        @media (max-width: 480px) {
-            .page-header h1 { font-size: 20px; }
+        h1 {
+            color: #333;
         }
-        
-        ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
-        
-        .content-area {
-            animation: fadeIn 0.4s ease;
+        .alert-success {
+            background: #d4edda;
+            color: #155724;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #c3e6cb;
+            margin: 10px 0;
         }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(12px); }
-            to { opacity: 1; transform: translateY(0); }
+        .alert-error {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #f5c6cb;
+            margin: 10px 0;
+        }
+        .alert-info {
+            background: #d1ecf1;
+            color: #0c5460;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #bee5eb;
+            margin: 10px 0;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 15px;
+        }
+        table th {
+            background: #333;
+            color: white;
+            padding: 10px;
+            text-align: left;
+        }
+        table td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        table tr:hover {
+            background: #f5f5f5;
+        }
+        .btn {
+            display: inline-block;
+            padding: 8px 16px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn:hover {
+            background: #0056b3;
+        }
+        .btn-danger {
+            background: #dc3545;
+        }
+        .btn-danger:hover {
+            background: #c82333;
+        }
+        .btn-success {
+            background: #28a745;
+        }
+        .btn-success:hover {
+            background: #218838;
+        }
+        .btn-sm {
+            padding: 4px 10px;
+            font-size: 12px;
         }
     </style>
     @yield('styles')
 </head>
 <body>
 
-<button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
-<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
-
-<nav class="sidebar" id="sidebar">
-    <div class="sidebar-brand">
-        <div class="logo">📚</div>
-        <div>
-            <div class="brand-text">Scheduler</div>
-            <div class="brand-sub">Teacher Management</div>
-        </div>
-    </div>
-    
-    <div class="nav-label">Main</div>
-    <a href="{{ route('admin.dashboard') }}" class="{{ request()->routeIs('admin.dashboard') ? 'active' : '' }}">
-        <span class="icon">📊</span> Dashboard
-    </a>
-    <a href="{{ route('teachers.index') }}" class="{{ request()->routeIs('teachers.index') ? 'active' : '' }}">
-        <span class="icon">👨‍🏫</span> Teachers
-    </a>
-    <a href="{{ route('teachers.create') }}" class="{{ request()->routeIs('teachers.create') ? 'active' : '' }}">
-        <span class="icon">➕</span> Add Teacher
-    </a>
-    
-    <div class="nav-label">Schedule</div>
-    <a href="{{ route('admin.schedule') }}" class="{{ request()->routeIs('admin.schedule') ? 'active' : '' }}">
-        <span class="icon">📅</span> Timetable
-    </a>
-    <a href="{{ route('admin.generate-schedule') }}">
-        <span class="icon">🔄</span> Generate Schedule
-    </a>
-    
-    <div class="nav-label">Account</div>
-    <a href="#" onclick="event.preventDefault(); document.getElementById('logout-form').submit();" class="logout-link">
-        <span class="icon">🚪</span> Logout
-    </a>
-    
-    <form id="logout-form" action="{{ route('teacher.logout') }}" method="POST" style="display: none;">
-        @csrf
-    </form>
+<nav>
+    <ul>
+        <li><a href="{{ route('admin.dashboard') }}">Dashboard</a></li>
+        <li><a href="{{ route('teachers.index') }}">Teachers</a></li>
+        <li><a href="{{ route('teachers.create') }}">Add Teacher</a></li>
+        <li><a href="{{ route('admin.schedule') }}">Timetable</a></li>
+        <li><a href="{{ route('admin.generate-schedule') }}">Generate Schedule</a></li>
+        <li>
+            <form action="{{ route('admin.logout') }}" method="POST">
+                @csrf
+                <button type="submit">Logout</button>
+            </form>
+        </li>
+    </ul>
 </nav>
 
-<main class="main-content">
-    <div class="page-header">
-        <div>
-            <h1>@yield('header', 'Dashboard')</h1>
-            <p class="subtitle">@yield('subtitle', 'Welcome back, Admin!')</p>
-        </div>
-        <div>
-            @yield('actions')
-        </div>
-    </div>
-    
+<div class="container">
+    <h1>@yield('header', 'Dashboard')</h1>
+    <p style="color: #666;">@yield('subtitle', '')</p>
+
     @if(session('success'))
-        <div style="background: rgba(34, 197, 94, 0.12); border: 1px solid rgba(34,197,94,0.15); border-radius: 12px; padding: 14px 20px; color: #6ee7b7; margin-bottom: 20px;">
-            {{ session('success') }}
-        </div>
+        <div class="alert-success">{{ session('success') }}</div>
     @endif
     @if(session('error'))
-        <div style="background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239,68,68,0.15); border-radius: 12px; padding: 14px 20px; color: #fca5a5; margin-bottom: 20px;">
-            {{ session('error') }}
-        </div>
+        <div class="alert-error">{{ session('error') }}</div>
     @endif
     @if(session('info'))
-        <div style="background: rgba(99, 102, 241, 0.12); border: 1px solid rgba(99,102,241,0.15); border-radius: 12px; padding: 14px 20px; color: #a5b4fc; margin-bottom: 20px;">
-            {{ session('info') }}
-        </div>
+        <div class="alert-info">{{ session('info') }}</div>
     @endif
-    
-    <div class="content-area">
-        @yield('content')
-    </div>
-</main>
 
-<script>
-    function toggleSidebar() {
-        document.getElementById('sidebar').classList.toggle('open');
-        document.getElementById('sidebarOverlay').classList.toggle('active');
-    }
-    
-    window.addEventListener('resize', function() {
-        if (window.innerWidth > 768) {
-            document.getElementById('sidebar').classList.remove('open');
-            document.getElementById('sidebarOverlay').classList.remove('active');
-        }
-    });
-</script>
+    @yield('content')
+</div>
 
 @yield('scripts')
-<a href="#" onclick="event.preventDefault(); document.getElementById('admin-logout-form').submit();" class="logout-link">
-    <span class="icon">🚪</span> Logout
-</a>
-
-<form id="admin-logout-form" action="{{ route('admin.logout') }}" method="POST" style="display: none;">
-    @csrf
-</form>
 </body>
 </html>
